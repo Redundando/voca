@@ -1,0 +1,30 @@
+[vocabulary]
+
+generate_sentence = """
+<instructions>
+  <task>
+    Generate a single, simple sentence for a language learning app that uses a specific word.
+  </task>
+
+  <input>
+    <language_iso_code>{language}</language_iso_code>
+    <word>{word}</word>
+  </input>
+
+  <constraints>
+    <constraint>The sentence MUST be written in the language specified by <language_iso_code>.</constraint>
+    <constraint>The sentence MUST contain the word given in <word> exactly as provided.</constraint>
+    <constraint>The sentence SHOULD be short and easy to understand for learners.</constraint>
+    <constraint>Do not add explanations, translations, or any extra text.</constraint>
+  </constraints>
+
+  <output>
+    <format>JSON</format>
+    <schema>{{"sentence": "..."}}</schema>
+    <rules>
+      <rule>Return ONLY a single JSON object.</rule>
+      <rule>Use valid JSON with double quotes.</rule>
+    </rules>
+  </output>
+</instructions>
+"""

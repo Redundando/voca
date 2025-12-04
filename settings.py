@@ -1,0 +1,6 @@
+KEY_FILE = "service_account.json"
+SHEET_IDENTIFIER = "1qV0kUm-jko3CyIe1EeU8BC7XsBEuSCHWUsK5wQrEylg"
+VOCAB_TAB_NAME = "Vokabeln"
+LANGUAGE_1 = "fr"
+LANGUAGE_2 = "de"
+CATEGORY_COL = "category"
