@@ -1,30 +1,146 @@
 [vocabulary]
 
-generate_sentence = """
-<instructions>
+generate_sentences = """
   <task>
-    Generate a single, simple sentence for a language learning app that uses a specific word.
+    Generate exactly three short sentences in a source language for a language-learning app, each using a given word, and provide a natural translation of each sentence in a target language.
+    Each sentence should be easy to understand for learners. If possible it should be memorable (for example funny, slightly absurd, or containing an interesting fact).
   </task>
 
   <input>
-    <language_iso_code>{language}</language_iso_code>
+    <languages>{languages}</languages>
     <word>{word}</word>
+    <known_vocabularies>{known_vocabularies}</known_vocabularies>
   </input>
 
+  <input_format>
+    <languages>
+      A JSON array with exactly two ISO 639-1 language codes:
+      [source_language, target_language], e.g. ["fr", "de"].
+      The first element is ALWAYS the source language.
+      The second element is ALWAYS the target language.
+    </languages>
+    <known_vocabularies>
+      A JSON array of strings with known words in the source language.
+      Example: ["chien", "maison", "grand"]. It may be empty.
+    </known_vocabularies>
+    <word>
+      A single word or phrase in the source language. This word MUST appear in every source sentence.
+    </word>
+  </input_format>
+
   <constraints>
-    <constraint>The sentence MUST be written in the language specified by <language_iso_code>.</constraint>
-    <constraint>The sentence MUST contain the word given in <word> exactly as provided.</constraint>
-    <constraint>The sentence SHOULD be short and easy to understand for learners.</constraint>
-    <constraint>Do not add explanations, translations, or any extra text.</constraint>
+    <constraint>All three sentences MUST be written in the source language (first element of &lt;languages&gt;).</constraint>
+    <constraint>Each source sentence MUST contain the word given in &lt;word&gt; as provided (same form, same spelling).</constraint>
+    <constraint>Sentences MUST be short and suitable for beginners (use present tense and straightforward structures).</constraint>
+    <constraint>Each sentence can aim to be memorable: for example by being funny, slightly absurd, or presenting an interesting fact.</constraint>
+    <constraint>Sentences MUST be natural, correct, and idiomatic in the source language.</constraint>
+
+    <constraint>
+      When possible, build each sentence mainly from the words in &lt;known_vocabularies&gt; plus very simple function words
+      (articles, pronouns, prepositions, basic verbs like “to be”, “to have”).
+    </constraint>
+    <constraint>
+      If &lt;known_vocabularies&gt; is empty, very small, or does not allow a natural sentence, you MAY use other very common,
+      simple words in the source language.
+    </constraint>
+
+    <constraint>
+      For every source sentence, provide one accurate, natural translation in the target language (second element of &lt;languages&gt;).
+    </constraint>
+    <constraint>All three sentences MUST be different from each other.</constraint>
+    <constraint>Do NOT add explanations, comments, labels, or any extra text outside the JSON object.</constraint>
   </constraints>
 
   <output>
     <format>JSON</format>
-    <schema>{{"sentence": "..."}}</schema>
+    <schema>
+      {{
+        "sentences": [
+          {{"source": "...", "translation": "..."}},
+          {{"source": "...", "translation": "..."}},
+          {{"source": "...", "translation": "..."}}
+        ]
+      }}
+    </schema>
+    <rules>
+      <rule>Return ONLY a single top-level JSON object.</rule>
+      <rule>Return EXACTLY three items in the "sentences" array.</rule>
+      <rule>"source" MUST contain the full sentence in the source language.</rule>
+      <rule>"translation" MUST contain the full translated sentence in the target language.</rule>
+      <rule>Use valid JSON with double quotes and no trailing commas.</rule>
+    </rules>
+  </output>
+"""
+
+
+
+rate_translation = """
+<instructions>
+  <task>
+    You are a strict but friendly teacher in a language-learning app.
+    Rate how good the user's translation is on a scale from 0 (completely incorrect)
+    to 100 (perfect translation).
+  </task>
+
+  <rating_scale>
+    <level score="0">Completely wrong: unrelated meaning, wrong language, or nonsense.</level>
+    <level score="20">Very poor: meaning mostly wrong; wrong word or part of speech.</level>
+    <level score="40">Partly correct: some overlap in meaning, but important elements are wrong (e.g. tense, gender, core sense).</level>
+    <level score="50">Somewhat correct: main idea is visible, but there are serious vocabulary or grammar mistakes.</level>
+    <level score="60">Mostly correct: understandable and usable, but with several clear mistakes.</level>
+    <level score="70">Almost correct: only a few smaller grammar or word-choice issues.</level>
+    <level score="80">Correct meaning; only spelling, accents, or capitalization need improvement.</level>
+    <level score="90">Very good: natural translation with only tiny stylistic or punctuation issues.</level>
+    <level score="100">Perfect: natural, correct, and fully appropriate including accents and details.</level>
+  </rating_scale>
+
+  <hints_instructions>
+    <rule>Always write hints in simple English.</rule>
+    <rule>If the rating is 100, set "Hints" to a short positive comment like "Perfect!".</rule>
+    <rule>If the rating is below 100, briefly explain what is wrong and how to improve it.</rule>
+    <rule>Focus on concrete issues (e.g. wrong word, wrong gender, wrong tense, missing accents, wrong article).</rule>
+    <rule>Keep "Hints" short (1–3 short sentences).</rule>
+  </hints_instructions>
+
+  <input>
+    <original_language_iso_code>{from_language}</original_language_iso_code>
+    <translated_language_iso_code>{to_language}</translated_language_iso_code>
+    <word>{word}</word>
+    <translation>{translation}</translation>
+  </input>
+
+  <output>
+    <format>JSON</format>
+    <schema>{{"rating": int, "hints": str}}</schema>
     <rules>
       <rule>Return ONLY a single JSON object.</rule>
       <rule>Use valid JSON with double quotes.</rule>
+      <rule>"Rating" must be an integer between 0 and 100.</rule>
     </rules>
   </output>
 </instructions>
+"""
+
+check_translation_simple = """
+You are a language-learning checker. Decide if the user's translation of a single word is correct.
+
+Correct if:
+- Same core meaning and part of speech.
+- In the target language.
+- Minor spelling/accents/capitalization issues are OK.
+- Common synonyms are OK.
+
+Incorrect if:
+- Different meaning or part of speech.
+- Wrong language.
+- Unrelated or nonsense.
+
+Original language: {from_language}
+Target language: {to_language}
+Word: {word}
+User translation: {translation}
+
+Answer ONLY with one of these JSON objects:
+{{"correct": True}}
+{{"correct": False}}
 """

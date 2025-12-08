@@ -1,7 +1,18 @@
 type: object
 properties:
-  sentence:
-    type: string
-
+  sentences:
+    type: array
+    minItems: 3
+    maxItems: 3
+    items:
+      type: object
+      properties:
+        source:
+          type: string
+        translation:
+          type: string
+      required:
+        - source
+        - translation
 required:
-  - sentence
+  - sentences

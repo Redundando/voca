@@ -10,6 +10,7 @@ import yaml
 from pathlib import Path
 import settings
 import json
+from single_vocabulary import SingleVocabulary
 
 class Vocabulary(JSONCache):
 
@@ -34,68 +35,30 @@ class Vocabulary(JSONCache):
     def categories(self):
         return self.vocabulary()[settings.CATEGORY_COL].unique().tolist()
 
-    def pick_random_vocabularies(self, n=10, categories: list[str] | None = None):
+    async def pick_random_vocabularies(self, n=5, categories: list[str] | None = None):
         if categories is None:
             subset = self.vocabulary()
         else:
             subset = self.vocabulary()[self.vocabulary()[settings.CATEGORY_COL].isin(categories)]
-        return subset.sample(n=n)
-
-    def say_vocabulary(self, vocabulary: pd.DataFrame, language: str = "fr"):
-        vocab = vocabulary.iloc[0].to_dict()
-        speak(text=vocab.get(language, ""), lang=language)
-
-
-class SingleVocabulary(JSONCache):
-    def __init__(self, df: pd.DataFrame):
-        self.languages = [df.columns[0], df.columns[1]]
-        self.category = df[settings.CATEGORY_COL].iloc[0]
-        self.words = {}
-        for l in self.languages:
-            self.words[l] =  df[l].iloc[0]
-        self.sentences = {}
-        super().__init__(data_id=json.dumps(self.words, ensure_ascii=False), directory="data/single_vocabulary")
+        subset = subset.sample(n=n)
+        vocab_dataframes = []
+        for i in range(len(subset)):
+            vocab_dataframes.append(subset.iloc[[i]])
+        tasks=[]
+        result: list[SingleVocabulary] = []
+        for df in vocab_dataframes:
+            vocab = SingleVocabulary(df = df)
+            result.append(vocab)
+            tasks+=vocab.pre_process_tasks()
+        await asyncio.gather(*tasks)
 
 
-
-    async def sentence(self, lang=""):
-        if self.sentences.get(lang) is not None:
-            return self.sentences[lang]
-        if lang not in self.languages:
-            return ""
-        prompt = i18n("vocabulary.generate_sentence", word=self.words.get(lang), language=lang)
-        with open(str(Path(__file__).parent / "i18n/sentence.yaml"), "r") as f:
-            json_schema = yaml.safe_load(f)
-
-        llm = AsyncLLM(base="openai", model="gpt-5", api_key=os.environ.get("OPENAI_API_KEY"), prompt=prompt,
-                       json_schema=json_schema)
-        await llm.execute()
-        self.sentences[lang] = llm.response.get("sentence")
-        return self.sentences[lang]
-
-    async def say_sentence(self, lang=""):
-        speak(text=await self.sentence(lang), lang=lang)
-
-    async def say_word(self, lang=""):
-        speak(text=self.words.get(lang), lang=lang)
-
-    async def say_vocab(self, lang=""):
-        await self.say_word(lang=lang)
-        #await asyncio.sleep(0.02)
-        await self.say_sentence(lang=lang)
-        #await asyncio.sleep(0.02)
-        await self.say_word(lang=lang)
 
 async def main():
     v = Vocabulary()
     #print(        await v.create_sentence_with_llm())
-    vocabs = v.pick_random_vocabularies()
-    print(vocabs)
-    vv = SingleVocabulary(vocabs)
-    print(await vv.sentence(lang="fr"))
-    print(await vv.sentence(lang="de"))
-    await vv.say_vocab(lang="fr")
-    await vv.say_vocab(lang="de")
+    await(v.pick_random_vocabularies(categories=["Grundlagen"]))
+    #print(vocabs)
 
 
 
