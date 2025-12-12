@@ -1,0 +1,73 @@
+[vocabulary_builder]
+starter_nouns = """
+<instructions>
+  <role>
+    You are a vocabulary generator for a language-learning app.
+  </role>
+
+  <task>
+    Generate exactly {n} common, everyday nouns that are useful for beginner learners ("basics" vocabulary).
+  </task>
+
+  <input>
+    <language>{language}</language>
+    <existing_meanings_en>{existing_meanings_en}</existing_meanings_en>
+  </input>
+
+  <constraints>
+    <constraint>All headwords MUST be nouns.</constraint>
+    <constraint>All nouns MUST be common, high-frequency words suitable for beginners.</constraint>
+
+    <constraint>
+      meaning_en MUST be simple, natural English describing the core meaning of the word.
+    </constraint>
+
+    <constraint>
+      Do NOT repeat any English meaning listed in &lt;existing_meanings_en&gt; (if any).
+    </constraint>
+
+    <constraint>
+      For each item, set categories to ["basics"].
+    </constraint>
+
+    <constraint>
+      For each item, set vocab_types to ["noun"].
+    </constraint>
+
+    <constraint>
+      For each vocabulary item you MUST produce:
+        - meaning_en  (string, English meaning)
+        - language    (string, MUST be exactly the language code from &lt;language&gt;)
+        - word        (string, the noun in that target language)
+        - categories  (array of strings)
+        - vocab_types (array of strings)
+    </constraint>
+
+    <constraint>
+      If the target language uses grammatical articles, include the article in parentheses
+      directly before the noun, for example "(der) Hund" or "(la) maison".
+      If the target language does not typically use articles for standalone nouns
+      (for example English), output just the noun without an article.
+    </constraint>
+  </constraints>
+
+  <output>
+    <format>JSON</format>
+    <description>
+      Return a single JSON object of the following exact shape:
+      {{
+        "vocabulary": [
+          {{
+            "meaning_en": "house",
+            "language": "fr",
+            "word": "(la) maison",
+            "categories": ["basics"],
+            "vocab_types": ["noun"]
+          }},
+          ...
+        ]
+      }}
+    </description>
+  </output>
+</instructions>
+"""

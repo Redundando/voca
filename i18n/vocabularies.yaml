@@ -1,0 +1,29 @@
+type: object
+properties:
+  vocabulary:
+    type: array
+    items:
+      type: object
+      properties:
+        meaning_en:
+          type: string
+        language:
+          type: string
+        word:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        vocab_types:
+          type: array
+          items:
+            type: string
+      required:
+        - meaning_en
+        - language
+        - word
+        - categories
+        - vocab_types
+required:
+  - vocabulary

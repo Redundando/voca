@@ -1,11 +1,13 @@
 type: object
 properties:
-  rating:
+  score:
     type: integer
+    description: "Rating of the user's translation from 0 (completely wrong) to 100 (perfect)."
     minimum: 0
     maximum: 100
   hints:
     type: string
+    description: "Very short feedback in English about what was wrong or could be improved. Empty string if everything is perfect."
 required:
-  - rating
+  - score
   - hints
